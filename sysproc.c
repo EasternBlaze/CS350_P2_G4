@@ -104,11 +104,28 @@ extern int sched_trace_counter;
 int sys_enable_sched_trace(void)
 {
   if (argint(0, &sched_trace_enabled) < 0)
-  {
+ {
     cprintf("enable_sched_trace() failed!\n");
   }
   
   sched_trace_counter = 0;
 
   return 0;
+}
+
+// Daniel: added set_schedint
+int scheduler_type = 0; // 0 for RR, 1 for Stride
+
+int sys_set_sched(void){
+    int sched_type;
+
+    if (argint(0, &sched_type) < 0){
+      return -1; // Fail
+    }
+
+    if (sched_type == 0 || sched_type == 1){
+      scheduler_type = sched_type;
+      return 0;  // Success
+    }
+    return -1; // Fail
 }
