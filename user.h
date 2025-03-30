@@ -39,5 +39,7 @@ void free(void*);
 int atoi(const char*);
 void shutdown(void);
 void enable_sched_trace(int enable);
+//Daniel: added fork_winner
+void fork_winner(int winner);
 //Daniel: added set_sched
 void set_sched(int);

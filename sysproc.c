@@ -113,6 +113,17 @@ int sys_enable_sched_trace(void)
   return 0;
 }
 
+// Daniel: added fork_winner
+int fork_winner_flag = 0; // Default: Parent runs first
+
+int sys_fork_winner(void) {
+    int winner;
+    if (argint(0, &winner) < 0)
+        return -1;
+    fork_winner_flag = (winner == 1) ? 1 : 0;
+    return 0;
+}
+
 // Daniel: added set_schedint
 int scheduler_type = 0; // 0 for RR, 1 for Stride
 
@@ -127,5 +138,5 @@ int sys_set_sched(void){
       scheduler_type = sched_type;
       return 0;  // Success
     }
-    return -1; // Fail
+    return 0;
 }

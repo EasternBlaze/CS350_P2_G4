@@ -555,3 +555,26 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+//Daniel: fork_winner
+extern int fork_winner_flag;  // Add a global flag
+
+int fork(void) {
+    struct proc *np;
+    struct proc *p = myproc();
+    
+    // Allocate process
+    if ((np = allocproc()) == 0)
+        return -1;
+
+    // Copy process state from parent
+    np->parent = p;
+    np->sz = p->sz;
+    np->state = RUNNABLE;
+
+    if (fork_winner_flag == 1) {
+        yield(); // Give child higher priority
+    }
+
+    return np->pid;
+}
