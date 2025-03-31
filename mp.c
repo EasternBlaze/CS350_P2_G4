@@ -69,7 +69,7 @@ mpsearch(void)
 // Check for correct signature, calculate the checksum and,
 // if correct, check the version.
 // To do: check extended table checksum.
-/*
+
 static struct mpconf*
 mpconfig(struct mp **pmp)
 {
@@ -88,60 +88,7 @@ mpconfig(struct mp **pmp)
   *pmp = mp;
   return conf;
 }
-*/
-// Search for an MP configuration table.
-static struct mpconf*
-mpconfig(struct mp **pmp)
-{
-    struct mpconf *conf;
-    struct mp *mp;
 
-    // Find the MP Floating Pointer Structure
-    mp = mpsearch();
-    if (!mp) {
-        cprintf("mpconfig: No MP structure found.\n");
-        return 0;
-    }
-
-    // Validate physaddr before using it
-    if (mp->physaddr == 0 || mp->physaddr > 0xFFFFFFFF) {
-        cprintf("mpconfig: Invalid physaddr: 0x%x\n", mp->physaddr);
-        return 0;
-    }
-
-    // Convert to virtual address safely
-    conf = (struct mpconf*) P2V((uint) mp->physaddr);
-
-    // Verify the "PCMP" signature
-    if (memcmp(conf, "PCMP", 4) != 0) {
-        cprintf("mpconfig: Invalid PCMP signature.\n");
-        return 0;
-    }
-
-    // Validate the version (1 or 4 only)
-    if (conf->version != 1 && conf->version != 4) {
-        cprintf("mpconfig: Unsupported version: %d\n", conf->version);
-        return 0;
-    }
-
-    // Ensure conf->length is within a valid range
-    if (conf->length <= 0 || conf->length > 1024) { // Limit to 1KB for safety
-        cprintf("mpconfig: Invalid conf->length: %d\n", conf->length);
-        return 0;
-    }
-
-    // Checksum verification
-    if (sum((uchar*)conf, conf->length) != 0) {
-        cprintf("mpconfig: Checksum failed.\n");
-        return 0;
-    }
-
-    *pmp = mp;
-    return conf;
-}
-
-
-/*
 void
 mpinit(void)
 {
@@ -190,69 +137,4 @@ mpinit(void)
     outb(0x22, 0x70);   // Select IMCR
     outb(0x23, inb(0x23) | 1);  // Mask external interrupts.
   }
-}
-*/
-
-void mpinit(void)
-{
-    uchar *p, *e;
-    int ismp = 1;
-    struct mp *mp;
-    struct mpconf *conf;
-    struct mpproc *proc;
-    struct mpioapic *ioapic;
-
-    // Validate mpconfig
-    conf = mpconfig(&mp);
-    if (!conf)
-        panic("mpinit: No valid MP configuration table found.");
-
-    // Validate LAPIC address
-    if (conf->lapicaddr == 0 || conf->lapicaddr > 0xFFFFFFFF) {
-        panic("mpinit: Invalid LAPIC address.");
-    }
-    lapic = (uint*)conf->lapicaddr;
-
-    // Iterate over the configuration entries safely
-    p = (uchar*)(conf + 1);
-    e = (uchar*)conf + conf->length;
-
-    if (p >= e) {
-        panic("mpinit: Invalid MP table length.");
-    }
-
-    while (p < e) {
-        switch (*p) {
-            case MPPROC:
-                proc = (struct mpproc*)p;
-                if (ncpu < NCPU) {
-                    cpus[ncpu].apicid = proc->apicid;
-                    ncpu++;
-                }
-                p += sizeof(struct mpproc);
-                continue;
-            case MPIOAPIC:
-                ioapic = (struct mpioapic*)p;
-                ioapicid = ioapic->apicno;
-                p += sizeof(struct mpioapic);
-                continue;
-            case MPBUS:
-            case MPIOINTR:
-            case MPLINTR:
-                p += 8;
-                continue;
-            default:
-                ismp = 0;
-                break;
-        }
-    }
-
-    if (!ismp)
-        panic("mpinit: Not a valid SMP machine.");
-
-    if (mp->imcrp) {
-        // Enable IMCR for real hardware
-        outb(0x22, 0x70);
-        outb(0x23, inb(0x23) | 1);
-    }
 }
