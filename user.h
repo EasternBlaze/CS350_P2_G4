@@ -44,4 +44,4 @@ void fork_winner(int winner);
 //Daniel: added set_sched
 void set_sched(int);
 //Xavier
-void tickets_owned( int );
+int tickets_owned( int );
