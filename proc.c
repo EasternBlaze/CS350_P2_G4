@@ -90,6 +90,10 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  //Adelaine added...
+  p->tickets = 0;
+  p->stride = 0;
+  p->pass = 0;
 
   release(&ptable.lock);
 
@@ -577,4 +581,32 @@ int fork(void) {
     }
 
     return np->pid;
+}
+
+//Adelaine
+int transfer_tickets(int pid, int tickets){
+	if(pid < 0){
+		return -3;}
+	if(tickets < 0){
+		return -1;}
+
+	acquire(&ptable.lock);
+	int current_pid = get_pid();
+	int current_tickets;
+
+	//Access current process
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+		if(p->pid == current_pid){
+			current_tickets = p->tickets;
+			if(tickets > current_tickets-1){
+				release(&ptable.lock)
+				return -2;}
+			current_tickets -= tickets;}
+	}
+
+	//Access recipient process
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+		if(p->pid == pid){
+			p->tickets += tickets;}
+	}
 }

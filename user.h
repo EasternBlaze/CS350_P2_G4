@@ -45,3 +45,5 @@ void fork_winner(int winner);
 void set_sched(int);
 //Xavier
 int tickets_owned( int );
+//Adelaine
+int transfer_tickets(int, int);

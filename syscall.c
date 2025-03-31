@@ -111,6 +111,8 @@ extern int sys_fork_winner(void);
 extern int sys_set_sched(void);
 // Xavier
 extern int sys_tickets_owned( void );
+//Adelaine
+extern int sys_transfer_tickets(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,

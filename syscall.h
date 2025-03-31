@@ -28,3 +28,5 @@
 #define SYS_set_sched 25
 //Xavier
 #define SYS_tickets_owned 26
+//Adelaine
+#define SYS_transfer_tickets 27

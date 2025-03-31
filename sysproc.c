@@ -159,4 +159,20 @@ int sys_tickets_owned( void ) {
 
   release( &ptable.lock );
   return -1;
-} 
+}
+
+//Adelaine
+int sys_transfer_tickets(void){
+	int recipient_pid;
+	int tickets;
+
+	//validation
+	if(argint(0, &recipient_pid)<0){
+		return -1;}
+	if(argint(1, &tickets)<0){
+		return -1;}
+
+	//ticket transfer
+	return transfer_tickets(recipient_pid, tickets);
+
+
