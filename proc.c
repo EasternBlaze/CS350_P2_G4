@@ -183,6 +183,7 @@ growproc(int n)
 // Create a new process copying p as the parent.
 // Sets up stack to return as if from system call.
 // Caller must set state of returned proc to RUNNABLE.
+/*
 int
 fork(void)
 {
@@ -224,7 +225,7 @@ fork(void)
 
   return pid;
 }
-
+*/
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state
 // until its parent calls wait() to find out it exited.
@@ -561,6 +562,7 @@ procdump(void)
 }
 
 //Daniel: fork_winner
+/*
 extern int fork_winner_flag;  // Add a global flag
 
 int fork(void) {
@@ -582,7 +584,58 @@ int fork(void) {
 
     return np->pid;
 }
+*/
 
+extern int fork_winner_flag;
+// Daniel: modified fork to achieve fork_winner
+int fork(void) {
+    int i, pid;
+    struct proc *np;
+    struct proc *curproc = myproc();
+
+    // Allocate a new process.
+    if ((np = allocproc()) == 0)
+        return -1;
+
+    // Copy process state from parent.
+    if ((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0) {
+        kfree(np->kstack);
+        np->kstack = 0;
+        np->state = UNUSED;
+        return -1;
+    }
+    np->sz = curproc->sz;
+    np->parent = curproc;
+    *np->tf = *curproc->tf;
+
+    // Clear %eax so that fork returns 0 in the child.
+    np->tf->eax = 0;
+
+    // Duplicate file descriptors.
+    for (i = 0; i < NOFILE; i++) {
+        if (curproc->ofile[i])
+            np->ofile[i] = filedup(curproc->ofile[i]);
+    }
+    np->cwd = idup(curproc->cwd);
+
+    // Copy the process name.
+    safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+    pid = np->pid;
+
+    // Mark the new process as RUNNABLE.
+    acquire(&ptable.lock);
+    np->state = RUNNABLE;
+    release(&ptable.lock);
+
+    // yield to give the child process higher priority.
+    if (fork_winner_flag == 1) {
+        yield();
+    }
+
+    return pid;
+}
+/*
 //Adelaine
 int transfer_tickets(int pid, int tickets){
 	if(pid < 0){
@@ -593,13 +646,13 @@ int transfer_tickets(int pid, int tickets){
 	acquire(&ptable.lock);
 	int current_pid = get_pid();
 	int current_tickets;
-
+  struct proc *p;
 	//Access current process
 	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
 		if(p->pid == current_pid){
 			current_tickets = p->tickets;
 			if(tickets > current_tickets-1){
-				release(&ptable.lock)
+				release(&ptable.lock);
 				return -2;}
 			current_tickets -= tickets;}
 	}
@@ -609,4 +662,62 @@ int transfer_tickets(int pid, int tickets){
 		if(p->pid == pid){
 			p->tickets += tickets;}
 	}
+}
+*/
+
+int transfer_tickets(int pid, int tickets) {
+  if (pid < 0) {
+      return -3;  // Invalid recipient pid.
+  }
+  if (tickets < 0) {
+      return -1;  // Negative tickets transfer is not allowed.
+  }
+
+  acquire(&ptable.lock);
+
+  // Instead of get_pid(), obtain the current process pointer.
+  struct proc *curproc = myproc();
+  
+  // Declare a loop variable.
+  struct proc *p;
+  int found_parent = 0;
+
+  // Find the current (parent) process in the process table and update its tickets.
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->pid == curproc->pid) {
+          // Ensure at least one ticket remains.
+          if (tickets > p->tickets - 1) {
+              release(&ptable.lock);
+              return -2;
+          }
+          p->tickets -= tickets;
+          found_parent = 1;
+          break;
+      }
+  }
+  
+  // If the parent's process wasn't found (unexpected), release and return an error.
+  if (!found_parent) {
+      release(&ptable.lock);
+      return -5;
+  }
+
+  // Find the recipient process and add tickets.
+  int found_recipient = 0;
+  for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+      if (p->pid == pid) {
+          p->tickets += tickets;
+          found_recipient = 1;
+          break;
+      }
+  }
+
+  release(&ptable.lock);
+
+  // If no recipient was found, you might choose to handle this case by refunding the parent's tickets.
+  if (!found_recipient) {
+      return -4;  // Recipient process not found.
+  }
+
+  return 0;  // Successful transfer.
 }

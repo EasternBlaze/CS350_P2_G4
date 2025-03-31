@@ -7,6 +7,13 @@
 #include "mmu.h"
 #include "proc.h"
 
+#include "spinlock.h"
+
+extern struct {
+  struct spinlock lock;
+  struct proc proc[NPROC];
+} ptable;
+
 int
 sys_fork(void)
 {
@@ -147,7 +154,7 @@ int sys_tickets_owned( void ) {
   struct proc* p;
   
   if ( argint( 0, &pid ) < 0 ) return -1;
-  acquire( &ptable.lock );
+  acquire( &ptable.lock);
 
   for ( p = ptable.proc; p < &ptable.proc[ NPROC ]; p++ ) {
     if ( p->pid == pid && p->state != UNUSED ) { 
@@ -161,6 +168,7 @@ int sys_tickets_owned( void ) {
   return -1;
 }
 
+extern int transfer_tickets(int recipient_pid, int tickets);
 //Adelaine
 int sys_transfer_tickets(void){
 	int recipient_pid;
@@ -174,5 +182,5 @@ int sys_transfer_tickets(void){
 
 	//ticket transfer
 	return transfer_tickets(recipient_pid, tickets);
-
+}
 
