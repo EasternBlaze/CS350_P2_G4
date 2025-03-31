@@ -1,0 +1,20 @@
+﻿Repo: https://github.com/EasternBlaze/CS350_P2_G4.git
+
+
+Work Breakdown
+Adelaine: transfer_tickets
+Xavier: tickets_owned
+Daniel: set_sched, fork_rc
+
+
+Implemented Syscalls
+1. Transfer tickets (Adelaine) - To implement this system call, I had to create and locate the ticket attribute of the calling and receiving processes. I put the tickets, pass, and stride values into proc.c in order to make them tangible values in the ptable. Also in proc.c is where I implemented the bulk of the logistics that made sure the recipient process existed, that the tickets were in the correct range, and finally subtracting the ticket value from the calling process’s tickets while adding that same value to the recipient process’s tickets. After that, I completed the system call by outlining it again in sysproc.c, and defining it in the other files.
+
+
+2. Tickest_owned (Xavier) - Implementing this syscall was similar to the process outlined above. After initializing the system call in user.h, usys.S, syscall.h,and syscall.c, I used the created tickets value to locate the calling process’s tickets value on the ptable. I used a for loop to stop on the calling process’s pid and get the accurate amount of tickets provided. 
+
+
+3. Fork_rc (Daniel) - The goal of this system call was to modify scheduling to allow child-first execution, which is parent-first by default. To achieve this, I first modified fork() in proc.c by adding an int value fork_winner_flag  to store the preference (either parent or child). Then, I implemented fork_winner system call by defining it on proc.c, implementing in sysproc.c, and registering the call in syscall.c. Also, the function was implemented in user.h and usys.S.
+
+
+4. set_sched  (Daniel) - This system call was implemented to switch between Round-Robin (RR) and Stride scheduling policy. To achieve this, sched_policy was defined in proc.c. Then in sysproc.c, I created a system call sys_set_sched() in sysproc.c. It was also registered in syscall.c and syscall.h. Finally, I provided a user-level wrapper in user.h, and modified scheduler in proc.c to check sched_policy.
