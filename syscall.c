@@ -109,7 +109,8 @@ extern int sys_enable_sched_trace(void);
 extern int sys_fork_winner(void);
 // Daniel: added set_sched
 extern int sys_set_sched(void);
-
+// Xavier
+extern int sys_tickets_owned( void );
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -139,6 +140,7 @@ static int (*syscalls[])(void) = {
 [SYS_fork_winner]  sys_fork_winner,
 // Daniel: added set_sched
 [SYS_set_sched] sys_set_sched,
+[SYS_tickets_owned] sys_tickets_owned,
 };
 
 void

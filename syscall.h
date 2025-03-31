@@ -26,3 +26,5 @@
 #define SYS_fork_winner 24
 //Daniel: added set_sched
 #define SYS_set_sched 25
+//Xavier
+#define SYS_tickets_owned 26

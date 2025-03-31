@@ -43,3 +43,5 @@ void enable_sched_trace(int enable);
 void fork_winner(int winner);
 //Daniel: added set_sched
 void set_sched(int);
+//Xavier
+void tickets_owned( int );

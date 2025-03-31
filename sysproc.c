@@ -140,3 +140,23 @@ int sys_set_sched(void){
     }
     return 0;
 }
+
+// Xavier 
+int sys_tickets_owned( void ) {
+  int pid;
+  struct proc* p;
+  
+  if ( argint( 0, &pid ) < 0 ) return -1;
+  acquire( &ptable.lock );
+
+  for ( p = ptable.proc; p < &ptable.proc[ NPROC ]; p++ ) {
+    if ( p->pid == pid && p->state != UNUSED ) { 
+      int tickets = p->tickets;
+      release( &ptable.lock );
+      return tickets;
+    }
+  }
+
+  release( &ptable.lock );
+  return -1;
+} 
